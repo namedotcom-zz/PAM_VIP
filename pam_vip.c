@@ -50,7 +50,7 @@ static int pam_err;
 
 //Declarations of helper functions//
 int write_data_out(char *ptr, size_t size, size_t nmemb, void *stream);
-int get_vipcred_ldap(char *rescred[], char *ldapurl, const char *uname, char *passwd, char *lfilter, FILE *dbfile, int deebug);
+int get_vipcred_ldap(char *rescred[], char *ldapurl, const char *uname, char *passwd, char *lfilter, char *ldapDN, FILE *dbfile, int deebug);
 int pam_xml_parse(char *infile, xmlChar **rcval, xmlChar **smval, FILE *dbfile, int deebug);
 
 //Implementation of Write Callback//
@@ -64,7 +64,7 @@ int write_data_out(char *ptr, size_t size, size_t nmemb, void *stream)
 }
 					   
 //Implementation of get_vipcred_ldap//
-int get_vipcred_ldap(char *rescred[], char *ldapurl, const char *uname, char *passwd, char *lfilter, FILE *dbfile, int deebug)
+int get_vipcred_ldap(char *rescred[], char *ldapurl, const char *uname, char *passwd, char *lfilter, char *ldapDN, FILE *dbfile, int deebug)
 {
 	int msg, protocol;
 	LDAPMessage *res=NULL;
@@ -78,7 +78,7 @@ int get_vipcred_ldap(char *rescred[], char *ldapurl, const char *uname, char *pa
 	cred.bv_val=passwd;
 	cred.bv_len=strlen(passwd);
 	servercredp=0;
-	sprintf(dn, "uid=%s,ou=People,dc=internal", uname); 
+	sprintf(dn, ldapDN, uname); 
 	sprintf(filter, lfilter, uname);
 	LDAP *ld;
 	
@@ -252,6 +252,7 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc, cons
 	static char *source_type=NULL;
 	static char *ldap_filter=NULL;
 	static char *ldap_server=NULL;
+	static char *DNformat=NULL;
 	static char *pempath=NULL;
 	static char *pempass=NULL;
 	static char * vipurl=NULL;
@@ -265,6 +266,7 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc, cons
 		CFG_SIMPLE_STR("source_type", &source_type),
 		CFG_SIMPLE_STR("ldap_server", &ldap_server),
 		CFG_SIMPLE_STR("ldap_filter", &ldap_filter),
+		CFG_SIMPLE_STR("DNformat", &DNformat),
 		CFG_SIMPLE_STR("pempath", &pempath),
 		CFG_SIMPLE_STR("pempass", &pempass),
 		CFG_SIMPLE_STR("vipurl", &vipurl),
@@ -276,7 +278,7 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc, cons
 	
 	//read in options from config file, then close cfg context//
 	cfg = cfg_init(opts, 0);
-	if(cfg_parse(cfg, "/etc/vip_pam.conf")==CFG_PARSE_ERROR)
+	if(cfg_parse(cfg, "/etc/pam_vip.conf")==CFG_PARSE_ERROR)
 	{
 		return PAM_SYSTEM_ERR;
 	}
@@ -368,7 +370,7 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc, cons
 	//check for LDAP protocol for credential exchange, if specified, call get_vipcred_ldap//
 	if(strcmp(source_type, "ldap")==0)
 	{
-		int outval=get_vipcred_ldap(vipcred, ldap_server, username, password, ldap_filter, gfile, debug);
+		int outval=get_vipcred_ldap(vipcred, ldap_server, username, password, ldap_filter, DNformat, gfile, debug);
 		if(outval!=0)
 		{
 			if(debug)

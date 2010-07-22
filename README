@@ -6,12 +6,12 @@ verification with Verisign's VIP service.
 Use:
 In order to require two-factor authentication, add this module to the appropriate position
 in the desired service's module stack in "/etc/pam.d/". If debugging output is desired, you must
-specify "debug" int the same row, immediately after the module name. When debugging is enabled,
-debug messages are written to "/tmp/sshd.log", unless this path has been changed by in the config file.
-Credentials should be entered in the form: <username>, <password::viptoken>. That is, your password and VIP
-OTP (one-time-password) should be concatenated together and input as the user's password. After the
+specify "debug" in the same row, immediately after the module name. When debugging is enabled,
+debug messages are written to "/tmp/sshd.log", unless this path has been changed in the config file.
+Credentials should be entered in the form: <username>, <password::viptoken>. That is, your password and
+VIP OTP (one-time-password) should be concatenated together and input as the user's password. After the
 module has run, the user's password (without the OTP) has been set as the value of PAM_AUTHTOK for
-use by other auth modules.
+use by other auth modules lower in the stack.
 
 Configuration:
 System-specific variables should be set in vip_pam.conf (see provided example), and are 
