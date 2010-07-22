@@ -47,6 +47,7 @@ Copyright (C) 2010  Joshua Quist
 char* xmlBuff;
 int RunningSize=0;
 static int pam_err;
+
 //Declarations of helper functions//
 int write_data_out(char *ptr, size_t size, size_t nmemb, void *stream);
 int get_vipcred_ldap(char *rescred[], char *ldapurl, const char *uname, char *passwd, char *lfilter, FILE *dbfile, int deebug);
@@ -254,6 +255,7 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc, cons
 	static char *pempath=NULL;
 	static char *pempass=NULL;
 	static char * vipurl=NULL;
+	static char *logpath=NULL;
 	static long tokenlength;
 	size_t tokensize;
 	static int debug=1;		
@@ -266,29 +268,23 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc, cons
 		CFG_SIMPLE_STR("pempath", &pempath),
 		CFG_SIMPLE_STR("pempass", &pempass),
 		CFG_SIMPLE_STR("vipurl", &vipurl),
+		CFG_SIMPLE_STR("logpath", &logpath),
 		CFG_SIMPLE_INT("tokenlength", &tokenlength),
 		CFG_END()
 	};
 	cfg_t *cfg;
 	
-	//open log file (only writes info out if "debug" is specified in /etc/pam.d/sshd)//	
-	FILE *gfile;
-	gfile= fopen ("/tmp/sshd.log", "w");
-
-	if(debug)fprintf(gfile, "Options set, debug=%d\n loading settings from vip_pam.conf\n", debug);	
-	
 	//read in options from config file, then close cfg context//
 	cfg = cfg_init(opts, 0);
 	if(cfg_parse(cfg, "/etc/vip_pam.conf")==CFG_PARSE_ERROR)
 	{
-		if(debug)
-		{
-			fprintf(gfile, "Unable to Parse vip_pam.conf\n");
-			fclose(gfile);
-		}
 		return PAM_SYSTEM_ERR;
 	}
 	cfg_free(cfg);
+	
+	//open log file (only writes info out if "debug" is specified in /etc/pam.d/sshd)//     
+        FILE *gfile;
+        gfile= fopen (logpath, "w");
 	
 	//get Username//
 	if((pam_err = pam_get_item(pamh, PAM_USER, (void *)&username))!=PAM_SUCCESS || username== NULL || *username=='\0' )
