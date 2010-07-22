@@ -14,9 +14,17 @@ module has run, the user's password (without the OTP) has been set as the value 
 use by other auth modules lower in the stack.
 
 Configuration:
-System-specific variables should be set in vip_pam.conf (see provided example), and are 
-labelled accordingly. This file should be located at /etc/vip_pam.conf, or the path must
-be adjusted in the source.
+System-specific variables should be set in pam_vip.conf (see provided example), and are 
+labeled accordingly. This file should be located at /etc/pam_vip.conf, or the path must
+be adjusted in the source. Unless you are implementing a DB protocol besides LDAP, you
+just need to specify the url of your ldap server, as well as the CN format for accounts
+on the server (a little more on the ldap server later).
+
+You must obtain a "production" certificate from verisign for the purpose of secure
+interaction with VIP servers. The path to this certificate must be specified in pam_vip.conf.
+Furthermore, you must also specify the passphrase for your machine's private ssl cert. The
+other variables (vipurl,tokenlength) should remain static, barring a change in the vip service
+standards. 
 
 Requirements:
 pam_vip requires the following be installed on your machine:
@@ -25,6 +33,13 @@ pam_vip requires the following be installed on your machine:
 -curl
 -libconfuse
 -linux-PAM, obviously 
+-You must have a secure database which contains users' CredentialIDs for the vip service. Unless adjusted
+	in the source, CredentialID's should be stored in the "Description" attribute under the user's
+	"personal" tab. The format of DN's (Distinguished Names) for ldap accounts must be specified under
+	the "DNformat" field in the configuration file.	At this	time LDAP is the only DB type supported,
+	but functionality for other protocols may be easily added to the source and then specified in the
+	config file.
+
 
 Licensing Information:
 Copyright (C) 2010 Joshua Quist
